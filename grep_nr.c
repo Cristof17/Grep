@@ -55,37 +55,47 @@ int main(int argc, char **argv){
 	t += strlen(p)-1;
 	p += strlen(p)-1;
 	long text_len = strlen(argv[1]);
+
+	/**
+ 	 * Starting index part
+ 	 *
+ 	 */
+	int start_p = 0;
+	int start_t = 0;
+	int stop_p = strlen(argv[2]);
+	int stop_t = strlen(argv[1]);
 	
-	while(total_processed != text_len){
-		if (strlen(p) == strlen(argv[2])){
+	while(start_t < stop_t){
+		if (start_p == stop_p-1){
 		   found = TRUE; //we found a pattern
 		   //go find the next one
 		   printf("Found one pattern\n");
-		   t += strlen(argv[2]);
+		   start_t += stop_p;
 		}
 		//if we found the pattern and the pattern is at the begining
 		//skip the text, don't stop, search for more
-		if (strlen(t) == strlen(argv[1])){
-			t += strlen(argv[2]);
+		if (start_t == stop_p){
+			start_t += stop_p;
 		}
-		if (*t == *p){
-			t--;
-			p--;
+		if (t[start_t] == p[start_p]){
+			start_t --;
+			start_p --;
 			processed++;
 		}
 		else {
-			if (strlen(t) < strlen(argv[2]))
+			//if we don't do this, make sure we
+			//don't skip the end of the t by
+			//adding the lengt of p
+			if (stop_t-start_t < stop_p)
 				break;
 			//shift t to the left				
-			int pattern_length = strlen(argv[2]);
-			int num = how_many_positions(p, *t, pattern_length);
-			t+= processed;
-			t+= num;
+			int num = how_many_positions(p, t[start_t], stop_p);
+			start_t+= processed;
+			start_t+= num;
 			total_processed += processed;
 			total_processed += num;
 			processed = 0;
-			p = argv[2];
-			p += strlen(p)-1;
+			start_p = stop_p-1;
 		}
 	}
 	return 0;
