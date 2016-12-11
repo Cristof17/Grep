@@ -65,7 +65,7 @@ int main(int argc, char **argv){
 		}
 		//if we found the pattern and the pattern is at the begining
 		//skip the text, don't stop, search for more
-		if (strlen(t) == strlen(argv[1])){
+		if (found && (strlen(t) == strlen(argv[1]))){
 			t += strlen(argv[2]);
 		}
 		if (*t == *p){

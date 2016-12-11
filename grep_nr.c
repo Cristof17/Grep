@@ -52,9 +52,6 @@ int main(int argc, char **argv){
 
 	long processed=0;
 	long total_processed=0;
-	t += strlen(p)-1;
-	p += strlen(p)-1;
-	long text_len = strlen(argv[1]);
 
 	/**
  	 * Starting index part
@@ -64,9 +61,11 @@ int main(int argc, char **argv){
 	int start_t = 0;
 	int stop_p = strlen(argv[2]);
 	int stop_t = strlen(argv[1]);
+	start_p += stop_p-1;
+	start_t += stop_t-1;
 	
 	while(start_t < stop_t){
-		if (start_p == stop_p-1){
+		if (start_p == 0){
 		   found = TRUE; //we found a pattern
 		   //go find the next one
 		   printf("Found one pattern\n");
@@ -74,9 +73,10 @@ int main(int argc, char **argv){
 		}
 		//if we found the pattern and the pattern is at the begining
 		//skip the text, don't stop, search for more
-		if (start_t == stop_p){
+		if (found && (stop_t - start_t == stop_t)){
 			start_t += stop_p;
 		}
+
 		if (t[start_t] == p[start_p]){
 			start_t --;
 			start_p --;
