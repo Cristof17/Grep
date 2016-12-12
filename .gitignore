@@ -2,4 +2,5 @@ grep
 .grep.c.swp
 .grep_nr.c.swp
 .grep_nr_omp.c.swp
-,grep_nr_pthread.c.swp
+.grep_nr_pthread.c.swp
+.grep_nr_mpi.c.swp

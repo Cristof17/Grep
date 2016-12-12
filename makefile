@@ -6,6 +6,7 @@ build:
 	gcc grep_nr.c -o grep -g
 	gcc grep_nr_omp.c -o grep -g -fopenmp
 	gcc grep_nr_pthread.c -o grep -g -lpthread
+	mpicc grep_nr_mpi.c -o grep -g
 debug:
 	gdb -tui --args ./grep $(TEXT) $(PATTERN)
 run:
