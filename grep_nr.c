@@ -36,33 +36,11 @@ int how_many_positions(char *p, char searched, int pattern_size){
 	return nr_pos;
 }
 
-int main(int argc, char **argv){
-	if (argc < 2){
-		printf("grep <pattern> <text>\n");
-		return 1;
-	}
-
-	char *p, *t;
+void process_text(char *t, char *p, int start_t, int stop_t, int start_p, int stop_p){
 	int found = 0;
-
-	p = argv[2];
-	t = argv[1];
-
 	long processed=0;
 	long total_processed=0;
 
-	/**
- 	 * Starting index part
- 	 *
- 	 */
-	int start_p = 0;
-	int start_t = 0;
-	int stop_p = strlen(argv[2]);
-	int stop_t = strlen(argv[1]);
-
-	start_p += strlen(argv[2])-1;
-	start_t += strlen(argv[2])-1;
-	
 	while(start_t < stop_t){
 		if (start_p == 0){
 		   found = TRUE; //we found a pattern
@@ -95,5 +73,27 @@ int main(int argc, char **argv){
 			start_p = stop_p-1;
 		}
 	}
+}
+
+int main(int argc, char **argv){
+	if (argc < 2){
+		printf("grep <pattern> <text>\n");
+		return 1;
+	}
+
+	char *p, *t;
+
+	p = argv[2];
+	t = argv[1];
+	int start_p = 0;
+	int start_t = 0;
+	int stop_p = strlen(argv[2]);
+	int stop_t = strlen(argv[1]);
+
+	start_p += strlen(argv[2])-1;
+	start_t += strlen(argv[2])-1;
+
+	process_text(t, p, start_t, stop_t, start_p, stop_p);
+	
 	return 0;
 }
