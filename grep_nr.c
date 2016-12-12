@@ -44,8 +44,6 @@ int main(int argc, char **argv){
 
 	char *p, *t;
 	int found = 0;
-	t += strlen(p)-1;
-	p += strlen(p)-1;
 
 	p = argv[2];
 	t = argv[1];
@@ -61,20 +59,19 @@ int main(int argc, char **argv){
 	int start_t = 0;
 	int stop_p = strlen(argv[2]);
 	int stop_t = strlen(argv[1]);
-	start_p += stop_p-1;
-	start_t += stop_t-1;
+
+	start_p += strlen(argv[2])-1;
+	start_t += strlen(argv[2])-1;
 	
 	while(start_t < stop_t){
 		if (start_p == 0){
 		   found = TRUE; //we found a pattern
 		   //go find the next one
 		   printf("Found one pattern\n");
+		   start_t += processed;
+		   start_p += processed;
 		   start_t += stop_p;
-		}
-		//if we found the pattern and the pattern is at the begining
-		//skip the text, don't stop, search for more
-		if (found && (stop_t - start_t == stop_t)){
-			start_t += stop_p;
+		   processed = 0;
 		}
 
 		if (t[start_t] == p[start_p]){
@@ -89,7 +86,7 @@ int main(int argc, char **argv){
 			if (stop_t-start_t < stop_p)
 				break;
 			//shift t to the left				
-			int num = how_many_positions(p, t[start_t], stop_p);
+			int num = how_many_positions(p + (stop_p - processed -1), t[start_t], stop_p);
 			start_t+= processed;
 			start_t+= num;
 			total_processed += processed;
