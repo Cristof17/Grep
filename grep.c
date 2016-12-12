@@ -44,8 +44,6 @@ int main(int argc, char **argv){
 
 	char *p, *t;
 	int found = 0;
-	t += strlen(p)-1;
-	p += strlen(p)-1;
 
 	p = argv[2];
 	t = argv[1];
