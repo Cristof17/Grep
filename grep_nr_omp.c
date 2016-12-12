@@ -48,7 +48,8 @@ void process_text(char *t, char *p, int start_t, int stop_t, int start_p, int st
 		if (start_p == 0){
 		   found = TRUE; //we found a pattern
 		   //go find the next one
-		   printf("Found one pattern\n");
+		   int thread_id = omp_get_thread_num();
+		   printf("%d Found one pattern\n", thread_id);
 		   //reset positions
 		   start_t += processed;
 		   start_p += processed;
@@ -97,6 +98,7 @@ int main(int argc, char **argv){
 	int NR_THREADS = omp_get_max_threads();
 	int chunk = stop_t/NR_THREADS;
 	int remainder = stop_t %NR_THREADS;
+	//printf("Chunk size = %d\n", chunk);
 
 	#pragma omp parallel private(start_p, start_t, stop_t) shared(stop_p)
 	{
@@ -106,21 +108,21 @@ int main(int argc, char **argv){
 		stop_t = (id + 1) * chunk -1;
 		if (id == NR_THREADS-1)
 			stop_t += remainder;
-		printf("%d id starts from %d ends %d\n", id, start_t, stop_t);
+	//	printf("%d id starts from %d ends %d\n", id, start_t, stop_t);
 		process_text(t, p, start_t, stop_t, start_p, stop_p);
 	}
-
-
+	
 	#pragma omp parallel private(start_p, start_t, stop_t) shared(stop_p)
 	{
 		int id = omp_get_thread_num();
 		int last_thread_id = NR_THREADS-1;
-		if (id != 0 && id != NR_THREADS-1){
+		if (id != NR_THREADS-1){
 			start_p = 0;
 			start_t = (id + 1) * chunk -1;
 			stop_t = (id + 1) * chunk -1;
-			start_t -= stop_p -1;
-			stop_t += stop_p -1;
+			start_t -= stop_p;
+			stop_t += stop_p;
+			//printf("Thread %d has start_t %d stop_t %d stop_p %d\n", id, start_t, stop_t, stop_p);
 			process_text(t, p, start_t, stop_t, start_p, stop_p);
 		}
 	}
