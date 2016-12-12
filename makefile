@@ -1,4 +1,4 @@
-TEXT = "bert Robert Robert merge la magazin pentru ca Robert nu are altceva de facut decat sa mearga la magazinul Robe"
+TEXT = "Robert Robert Robert merge la magazin pentru ca Robert nu are altceva de facut decat sa mearga la magazinut"
 PATTERN = "Robert"
 
 build:

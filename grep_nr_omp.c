@@ -37,24 +37,29 @@ int how_many_positions(char *p, char searched, int pattern_size){
 	return nr_pos;
 }
 
-void process_text(char *t, char *p, int start_t, int stop_t, int start_p, int stop_p){
+void process_text(char *t, char *p, int start_t, int stop_t, int start_p, int stop_p,
+					short *found_pos){
 	int found = 0;
 	long processed=0;
 	long total_processed=0;
 	start_p += stop_p-1;
 	start_t += stop_p-1;
 
-	while(start_t < stop_t){
+	while(start_t <= stop_t){
 		if (start_p == 0){
-		   found = TRUE; //we found a pattern
-		   //go find the next one
-		   int thread_id = omp_get_thread_num();
-		   printf("%d Found one pattern\n", thread_id);
-		   //reset positions
-		   start_t += processed;
-		   start_p += processed;
-		   start_t += stop_p;
-		   processed = 0;
+			found = TRUE; //we found a pattern
+			//go find the next one
+			int thread_id = omp_get_thread_num();
+			#pragma omp critical
+			if (found_pos[start_t] != TRUE){
+				printf("%d Found one pattern\n", thread_id);
+				found_pos[start_t] = TRUE;
+			}
+			//reset positions
+			start_t += processed;
+			start_p += processed;
+			start_t += stop_p;
+			processed = 0;
 		}
 
 		if (t[start_t] == p[start_p]){
@@ -99,6 +104,7 @@ int main(int argc, char **argv){
 	int chunk = stop_t/NR_THREADS;
 	int remainder = stop_t %NR_THREADS;
 	//printf("Chunk size = %d\n", chunk);
+	short *found = (short*)calloc(stop_t, sizeof(short));
 
 	#pragma omp parallel private(start_p, start_t, stop_t) shared(stop_p)
 	{
@@ -109,7 +115,7 @@ int main(int argc, char **argv){
 		if (id == NR_THREADS-1)
 			stop_t += remainder;
 	//	printf("%d id starts from %d ends %d\n", id, start_t, stop_t);
-		process_text(t, p, start_t, stop_t, start_p, stop_p);
+		process_text(t, p, start_t, stop_t, start_p, stop_p, found);
 	}
 	
 	#pragma omp parallel private(start_p, start_t, stop_t) shared(stop_p)
@@ -118,12 +124,12 @@ int main(int argc, char **argv){
 		int last_thread_id = NR_THREADS-1;
 		if (id != NR_THREADS-1){
 			start_p = 0;
-			start_t = (id + 1) * chunk -1;
-			stop_t = (id + 1) * chunk -1;
+			start_t = (id + 1) * chunk;
+			stop_t = (id + 1) * chunk;
 			start_t -= stop_p;
-			stop_t += stop_p;
+			stop_t += stop_p-1;
 			//printf("Thread %d has start_t %d stop_t %d stop_p %d\n", id, start_t, stop_t, stop_p);
-			process_text(t, p, start_t, stop_t, start_p, stop_p);
+			process_text(t, p, start_t, stop_t, start_p, stop_p, found);
 		}
 	}
 	
