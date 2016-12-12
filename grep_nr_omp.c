@@ -41,6 +41,8 @@ void process_text(char *t, char *p, int start_t, int stop_t, int start_p, int st
 	int found = 0;
 	long processed=0;
 	long total_processed=0;
+	start_p += stop_p-1;
+	start_t += stop_p-1;
 
 	while(start_t < stop_t){
 		if (start_p == 0){
@@ -92,29 +94,29 @@ int main(int argc, char **argv){
 	int stop_p = strlen(argv[2]);
 	int stop_t = strlen(argv[1]);
 
-	start_p += strlen(argv[2])-1;
-	start_t += strlen(argv[2])-1;
-
 	int NR_THREADS = omp_get_max_threads();
 	int chunk = stop_t/NR_THREADS;
-	int remainder = stop_t % NR_THREADS;
+	int remainder = stop_t %NR_THREADS;
 
-	#pragma omp parallel 
+	#pragma omp parallel private(start_p, start_t, stop_t) shared(stop_p)
 	{
 		int id = omp_get_thread_num();
-		//printf("Running from thread %d\n", id);
+		start_p = 0;
 		start_t = id * chunk;
 		stop_t = (id + 1) * chunk -1;
 		if (id == NR_THREADS-1)
 			stop_t += remainder;
+		printf("%d id starts from %d ends %d\n", id, start_t, stop_t);
 		process_text(t, p, start_t, stop_t, start_p, stop_p);
 	}
 
-	#pragma omp parallel
+
+	#pragma omp parallel private(start_p, start_t, stop_t) shared(stop_p)
 	{
 		int id = omp_get_thread_num();
 		int last_thread_id = NR_THREADS-1;
-		if (id != 0 || id != NR_THREADS-1){
+		if (id != 0 && id != NR_THREADS-1){
+			start_p = 0;
 			start_t = (id + 1) * chunk -1;
 			stop_t = (id + 1) * chunk -1;
 			start_t -= stop_p -1;
