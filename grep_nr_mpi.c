@@ -2,12 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omp.h>
-#include <pthread.h>
+#include <mpi.h>
 
 #define TRUE 1
 #define FALSe 0
-
-#define THREADS 32
 
 void print(char *v){
 	puts(v);
@@ -23,7 +21,6 @@ typedef struct params_t{
 	int thread_id;
 	int padding;
 	short *found_pos;
-	pthread_mutex_t *mutex;
 }params;
 
 
@@ -65,18 +62,8 @@ int how_many_positions(char *p, char searched, int pattern_size){
  * thread did it before
  */
 
-void* process_text(void *par){
+void* process_text(char *t, char *p, int start_t, int stop_t, int start_p, int stop_p, short *found_pos){
 	
-	params *pmtrs = (params*)par;
-	int thread_id = pmtrs->thread_id;
-	char *t = pmtrs->t;
-	char *p = pmtrs->p;
-	int start_t = pmtrs->start_t;
-	int stop_t = pmtrs-> stop_t;
-	int start_p = pmtrs-> start_p;
-	int stop_p = pmtrs-> stop_p;
-	short *found_pos = pmtrs-> found_pos;
-	pthread_mutex_t *mutex = pmtrs->mutex;
 	int found = 0;
 	long processed=0;
 	long total_processed=0;
@@ -87,13 +74,11 @@ void* process_text(void *par){
 		if (start_p == 0){
 			found = TRUE; //we found a pattern and then go find the next one
 			//acquire the mutex
-			pthread_mutex_lock(mutex);
 			if (found_pos[start_t] != TRUE){
-				printf("%d Found one pattern\n", thread_id);
+				printf("%d Found one pattern\n");
 				found_pos[start_t] = TRUE;
 			}
 			//release the mutex
-			pthread_mutex_unlock(mutex);
 			//reset positions
 			start_t += processed;
 			start_p += processed;
@@ -129,71 +114,120 @@ int main(int argc, char **argv){
 		printf("grep <pattern> <text>\n");
 		return 1;
 	}
-	
 	/*
-	 * pThread flavour
+	 * openMPI flavour
 	 *
 	 */
-	int id = 0;
-	pthread_t threads[THREADS];
-	pthread_t threads2[THREADS];
-	params prms[THREADS];
-	pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+	int rank;
+	int numtasks;
+	int rc;
+	int id;
+	MPI_Init(&argc, &argv);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
 
+	if (rank == 0){
+		if (numtasks < 2 ) {
+			printf("Need at least two MPI tasks. Quitting...\n");
+			MPI_Abort(MPI_COMM_WORLD, rc);
+			exit(1);
+		}
+	}
+		
 	/*
 	 * P = pattern searched
 	 * T = text in which to find the pattern
 	 */
 	char *p, *t;
-
+	
 	p = argv[2];
 	t = argv[1];
-	int start_p = 0; //current character in the pattern examined
-	int start_t = 0; //current character in the text examined
-	int stop_p = strlen(argv[2]);
-	int stop_t = strlen(argv[1]);
-
-	int NR_THREADS = THREADS;
-	int chunk = stop_t/NR_THREADS; //how much each thread will be processing
-	int remainder = stop_t %NR_THREADS; //the last thread gets the uneven part
-	//found contains TRUE on each start position of pattern p in text t
-	short *found = (short*)calloc(stop_t, sizeof(short));
-
-	for (id = 0; id < NR_THREADS; ++id)
-	{
-		start_p = 0; //omp does not use the previous value, except firstprivate
-		start_t = id * chunk;
-		stop_t = (id + 1) * chunk -1;
-		if (id == NR_THREADS-1)
-			stop_t += remainder;//give the last chunk to the last array
-		//go find the pattern and flag the beginning of the patterns found
-		//in the found array
-		prms[id].t = t;
-		prms[id].p = p;
-		prms[id].start_t = start_t;
-		prms[id].stop_t = stop_t;
-		prms[id].start_p = start_p;
-		prms[id].stop_p = stop_p;
-		prms[id].found_pos = found;
-		prms[id].thread_id = id;
-		prms[id].mutex = &mutex;
-		int rc = pthread_create(&threads[id], NULL, process_text, (void *)&prms[id]);
-	}
-
-	for(id = 0; id < NR_THREADS; ++id){
-		int rc = pthread_join(threads[id], NULL);
-	}
+	int start_p; //current character in the pattern examined
+	int start_t; //current character in the text examined
+	int stop_p;
+	int stop_t;
+	int chunk;
+	int remainder;
 	
-	pthread_mutex_destroy(&mutex);
+	if (rank == 0){
+		/*
+		 * Init-tot 
+		 * 
+		 */
+		start_t = 0;
+		start_p = 0;
+		stop_p = strlen(argv[2]);
+		stop_t = strlen(argv[1]);
+		chunk = stop_t/numtasks; //how much each thread will be processing
+		remainder = stop_t %numtasks; //the last thread gets the uneven part
+		//found contains TRUE on each start position of pattern p in text t
+		short *found = (short*)calloc(stop_t, sizeof(short));
+		/*
+		 * Send chunks
+		 */
+		for (id = 1; id < numtasks; ++id)
+		{
+			start_p = 0; //omp does not use the previous value, except firstprivate
+			start_t = id * chunk;
+			stop_t = (id + 1) * chunk -1;
+			if (id == numtasks-1)
+				stop_t += remainder;//give the last chunk to the last array
+			/*
+			 * Send integers
+			 */
+			MPI_Send(&start_t, 1, MPI_INT, id, 0, MPI_COMM_WORLD);
+			MPI_Send(&stop_t, 1, MPI_INT, id, 0, MPI_COMM_WORLD);
+			MPI_Send(&start_p, 1, MPI_INT, id, 0, MPI_COMM_WORLD);
+			MPI_Send(&stop_p, 1, MPI_INT, id, 0, MPI_COMM_WORLD);
+			MPI_Send(&t[start_t], stop_t-start_t + 1, MPI_INT, id, 0, MPI_COMM_WORLD);
+		}
+		/*
+		 * Process
+		 */
+		process_text(t, p, start_t, stop_t, start_p, stop_p, found);
+		/*
+		 * Receive
+		 */
+		for (id = 1; id < numtasks; ++id){
+			start_t = id * chunk;
+			stop_t = (id + 1) * chunk;
+			if (id == numtasks-1)
+				stop_t += remainder;
+			MPI_Recv(&found[start_t], stop_t-start_t +1, MPI_SHORT, id, 0, MPI_COMM_WORLD, NULL); 
+		}
+	}
+	else{
+		//receive all the parameters
+		/*
+		 *  Receive
+		 */
+		MPI_Recv(&start_t, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
+		MPI_Recv(&stop_t, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
+		MPI_Recv(&start_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
+		MPI_Recv(&stop_p, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, NULL);
+		MPI_Recv(t, stop_t-start_t+1, MPI_INT, id, 0, MPI_COMM_WORLD, NULL);
+		/*
+		 * Init array
+		 */
+		short *found = (short*)calloc(stop_t, sizeof(short));
+		/*
+		 * Process
+		 */
+		process_text(t, p, start_t, stop_t, start_p, stop_p, found);
+		/*
+		 * Send
+		 */
+		MPI_Send(found, stop_t - start_t +1, MPI_SHORT, 0, 0, MPI_COMM_WORLD);
+	}
+		
+	//TODO Receive the stop_t first
 
-	pthread_mutex_init(&mutex, NULL);
 	/*
 	 * If the splitting of the chunks was in the middle of the pattern p
 	 * in a text, it is needed to check the (-pattern_size-1;+pattern_size-1)
 	 * region of each point of split to see if we find any more patterns
 	 */
-	 
-	
+	/*
 	for (id = 0; id < NR_THREADS; ++id)
 	{
 		//when searching at the border between two thread chunks, the 
@@ -217,19 +251,9 @@ int main(int argc, char **argv){
 			prms[id].stop_p = stop_p;
 			prms[id].found_pos = found;
 			prms[id].thread_id = id;
-			prms[id].mutex = &mutex;
-			int rc = pthread_create(&threads[id], NULL, process_text, (void *)&prms[id]);
+			//int rc = pthread_create(&threads[id], NULL, process_text, (void *)&prms[id]);
 		}
-	}
+	}*/
 
-	for(id = 0; id < NR_THREADS; ++id){
-		//NR_THREADS-1 thread did not start so there is no need to stop it
-		//it will get blocked
-		if (id == NR_THREADS-1)
-			continue;
-		int rc = pthread_join(threads[id], NULL);
-	}
-	
-	pthread_mutex_destroy(&mutex);
-			return 0;
+	return 0;
 }

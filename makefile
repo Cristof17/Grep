@@ -9,5 +9,7 @@ build:
 	mpicc grep_nr_mpi.c -o grep -g
 debug:
 	gdb -tui --args ./grep $(TEXT) $(PATTERN)
-run:
+run_omp:
 	./grep $(TEXT) $(PATTERN)
+run_mpi:
+	mpirun -np 2 ./grep $(TEXT) $(PATTERN)
