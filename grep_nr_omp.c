@@ -102,12 +102,25 @@ int main(int argc, char **argv){
 	#pragma omp parallel 
 	{
 		int id = omp_get_thread_num();
-		printf("Running from thread %d\n", id);
+		//printf("Running from thread %d\n", id);
 		start_t = id * chunk;
 		stop_t = (id + 1) * chunk -1;
 		if (id == NR_THREADS-1)
 			stop_t += remainder;
 		process_text(t, p, start_t, stop_t, start_p, stop_p);
+	}
+
+	#pragma omp parallel
+	{
+		int id = omp_get_thread_num();
+		int last_thread_id = NR_THREADS-1;
+		if (id != 0 || id != NR_THREADS-1){
+			start_t = (id + 1) * chunk -1;
+			stop_t = (id + 1) * chunk -1;
+			start_t -= stop_p -1;
+			stop_t += stop_p -1;
+			process_text(t, p, start_t, stop_t, start_p, stop_p);
+		}
 	}
 	
 	return 0;
