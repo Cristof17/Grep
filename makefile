@@ -7,9 +7,10 @@ build:
 	gcc grep_nr_omp.c -o grep -g -fopenmp
 	gcc grep_nr_pthread.c -o grep -g -lpthread
 	mpicc grep_nr_mpi.c -o grep -g
+	mpicc grep_nr_mpi_omp.c -o grep -g -fopenmp
 debug:
 	gdb -tui --args ./grep $(TEXT) $(PATTERN)
 run_omp:
 	./grep $(TEXT) $(PATTERN)
 run_mpi:
-	mpirun -np 32 ./grep $(TEXT) $(PATTERN)
+	mpirun -np 4 ./grep $(TEXT) $(PATTERN)

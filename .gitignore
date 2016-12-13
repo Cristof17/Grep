@@ -4,3 +4,4 @@ grep
 .grep_nr_omp.c.swp
 .grep_nr_pthread.c.swp
 .grep_nr_mpi.c.swp
+.grep_nr_mpi_omp.c.swp
