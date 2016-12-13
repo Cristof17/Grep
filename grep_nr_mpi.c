@@ -269,7 +269,6 @@ int main(int argc, char **argv){
 	 * in a text, it is needed to check the (-pattern_size-1;+pattern_size-1)
 	 * region of each point of split to see if we find any more patterns
 	 */
-	/*
 	if (rank == 0){
 		
  		//Send 
@@ -319,7 +318,6 @@ int main(int argc, char **argv){
  		//Send
 		MPI_Send(&found[start_t-1], stop_t-start_t+1, MPI_SHORT, 0, 0, MPI_COMM_WORLD);
 	}
-	*/
  	//Debug
  	
 	if (rank == 0){

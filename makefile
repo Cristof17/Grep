@@ -13,4 +13,4 @@ debug:
 run_omp:
 	./grep $(TEXT) $(PATTERN)
 run_mpi:
-	mpirun -np 4 ./grep $(TEXT) $(PATTERN)
+	mpirun -np 16 ./grep $(TEXT) $(PATTERN)
