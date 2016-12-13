@@ -71,7 +71,7 @@ void* process_text(char *t, char *p, int start_t, int stop_t, int start_p, int s
 		if (start_p == 0){
 			found = TRUE; //we found a pattern and then go find the next one
 			//acquire the mutex
-			if (found_pos[start_t] == 0){
+			if (found_pos[start_t] != TRUE){
 				//printf("%d Found one pattern\n", rank);
 				found_pos[start_t] = rank;
 			}
@@ -112,6 +112,13 @@ void print(short *found, int size){
 		printf("%d", found[i]);
 	}
 	printf("\n");
+}
+
+void init(short *v, int size){
+	int i= 0;
+	for(i = 0; i < size; ++i){
+		v[i] = -1;
+	}
 }
 
 int main(int argc, char **argv){
@@ -170,6 +177,7 @@ int main(int argc, char **argv){
 		remainder = stop_t %numtasks; //the last thread gets the uneven part
 		//found contains TRUE on each start position of pattern p in text t
 		found = (short*)calloc(stop_t, sizeof(short));
+		init(found, stop_t);
 		/*
 		 * Send chunks
 		 */
@@ -233,6 +241,7 @@ int main(int argc, char **argv){
 		 * Init array
 		 */
 		found = (short*)calloc(stop_t, sizeof(short));
+		init(found, stop_t);
 		p =(char*)malloc(((stop_p-start_p + 1) * sizeof(char)) +1);
 		t = (char*)malloc((len_t * sizeof(char))) ;
 		MPI_Recv(&p[0], stop_p-start_p +1, MPI_CHAR, 0, 0,MPI_COMM_WORLD, NULL); 
@@ -265,31 +274,31 @@ int main(int argc, char **argv){
  		//Send 
 		for (id = 1; id < numtasks; ++id){
 			if (id != numtasks-1){
-				start_t = (id + 1) * chunk;
-				stop_t = (id + 1) * chunk;
-				start_t -= stop_p;
-				stop_t += stop_p-1;
+				start_t = ((id + 1) * chunk)-1;
+				stop_t = ((id + 1) * chunk);
+				start_t -= (stop_p);
+				stop_t += (stop_p);
 				MPI_Send(&start_t, 1, MPI_INT, id, 0, MPI_COMM_WORLD);
 				MPI_Send(&stop_t, 1, MPI_INT, id, 0, MPI_COMM_WORLD);
 				MPI_Send(&t[start_t], stop_t-start_t+1, MPI_CHAR, id, 0, MPI_COMM_WORLD);
 			}
 		}
  		//Init
-		start_t = chunk;
+		start_t = chunk-1;
 		stop_t = chunk;
-		start_t -= stop_p;
-		stop_t += stop_p -1; 
+		start_t -= (stop_p);
+		stop_t += (stop_p); 
  		//Process
 		//printf("Task %d received: start_t:%d, stop_t:%d, start_p:%d, stop_p:%d\n", rank, start_t, stop_t, start_p, stop_p);
 		process_text(t, p, start_t, stop_t, start_p, stop_p, found, rank);
 		//Receive
 		for (id = 1; id < numtasks; ++id){
 			if (id != numtasks-1){
-				start_t = (id + 1)* chunk;
-				stop_t = (id + 1)* chunk;
-				start_t -= stop_p;
-				stop_t += stop_p -1;
-				MPI_Recv(&found[start_t], stop_t-start_t+1, MPI_SHORT, id, 0, MPI_COMM_WORLD, NULL);
+				start_t = ((id + 1)* chunk)-1;
+				stop_t = ((id + 1)* chunk);
+				start_t -= (stop_p);
+				stop_t += (stop_p);
+				MPI_Recv(&found[start_t -1], stop_t-start_t+1, MPI_SHORT, id, 0, MPI_COMM_WORLD, NULL);
 			}
 		}
 	}
@@ -302,20 +311,29 @@ int main(int argc, char **argv){
 		MPI_Recv(&t[start_t], stop_t-start_t+1, MPI_CHAR, 0, 0, MPI_COMM_WORLD, NULL);
  		//Init
 		found = (short*)calloc(stop_t, sizeof(short));
+		init(found, stop_t);
  		//Process
 		//printf("Task %d received: start_t:%d, stop_t:%d, start_p:%d, stop_p:%d\n", rank, start_t, stop_t, start_p, stop_p);
 		process_text(t, p, start_t, stop_t, start_p, stop_p, found, rank);
  		//Send
-		MPI_Send(&found[start_t], stop_t-start_t+1, MPI_SHORT, 0, 0, MPI_COMM_WORLD);
+		MPI_Send(&found[start_t-1], stop_t-start_t+1, MPI_SHORT, 0, 0, MPI_COMM_WORLD);
 	}
 
  	//Debug
+ 	
 	if (rank == 0){
-		int i =0;
-		for (i = 0; i < stop_t; ++i){
-			if (found[i] != 0)
-				printf("%d Found pattern\n", found[i]);
+		int i = 0;
+		for (i = 0; i < len_t; ++i){
+			if (found[i] != -1)
+				printf("%d found pattern\n", found[i]);
 		}
+		printf("\n");
+		/*
+		for (i = 0; i < len_t; ++i){
+			printf("%d", found[i]);
+		}
+		printf("\n");
+		*/
 	}
 
 	MPI_Finalize();
