@@ -8,7 +8,7 @@
 #define TRUE 1
 #define FALSE 0
 
-#define THREADS 4
+#define THREADS 8
 
 typedef struct params_t{
 	char *t;

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <omp.h>
+#include <time.h>
 
 #define TRUE 1
 #define FALSe 0
@@ -121,6 +122,7 @@ int main(int argc, char **argv){
 	//found contains TRUE on each start position of pattern p in text t
 	short *found = (short*)calloc(stop_t, sizeof(short));
 
+	clock_t start = clock();
 	#pragma omp parallel private(start_p, start_t, stop_t) shared(stop_p)
 	{
 		int id = omp_get_thread_num();
@@ -158,6 +160,8 @@ int main(int argc, char **argv){
 			process_text(t, p, start_t, stop_t, start_p, stop_p, found);
 		}
 	}
+	clock_t stop = clock();
+	printf("Executed in %f\n", ((float)stop-start)/CLOCKS_PER_SEC);
 	
 	return 0;
 }

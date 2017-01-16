@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define TRUE 1
 #define FALSe 0
@@ -54,6 +55,7 @@ int main(int argc, char **argv){
 	p += strlen(p)-1;
 	long text_len = strlen(argv[1]);
 	
+	clock_t start = clock();
 	while(total_processed != text_len){
 		if (strlen(p) == strlen(argv[2])){
 		   found = TRUE; //we found a pattern
@@ -86,5 +88,7 @@ int main(int argc, char **argv){
 			p += strlen(p)-1;
 		}
 	}
+	clock_t stop = clock();
+	printf("Executed in %f\n", ((float)stop-start)/CLOCKS_PER_SEC);
 	return 0;
 }

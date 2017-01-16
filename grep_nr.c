@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #define TRUE 1
 #define FALSe 0
@@ -93,7 +94,10 @@ int main(int argc, char **argv){
 	start_p += strlen(argv[2])-1;
 	start_t += strlen(argv[2])-1;
 
+	clock_t start = clock();
 	process_text(t, p, start_t, stop_t, start_p, stop_p);
+	clock_t stop = clock();
+	printf("Excecuted in %f\n", ((float)stop-start)/CLOCKS_PER_SEC);
 	
 	return 0;
 }

@@ -3,6 +3,7 @@
 #include <string.h>
 #include <omp.h>
 #include <mpi.h>
+#include <time.h>
 
 #define TRUE 1
 #define FALSe 0
@@ -164,6 +165,7 @@ int main(int argc, char **argv){
 	short *found;
 	int len_t; //send the length of t
 	
+	clock_t start = clock();
 	if (rank == 0){
 		/*
 		 * Init-tot 
@@ -467,6 +469,7 @@ int main(int argc, char **argv){
 	}
 
 	MPI_Finalize();
-
+	clock_t stop = clock();
+	printf("Executed in %f\n",((float)stop-start)/CLOCKS_PER_SEC);
 	return 0;
 }

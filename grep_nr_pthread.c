@@ -3,6 +3,7 @@
 #include <string.h>
 #include <omp.h>
 #include <pthread.h>
+#include <time.h>
 
 #define TRUE 1
 #define FALSe 0
@@ -159,6 +160,7 @@ int main(int argc, char **argv){
 	//found contains TRUE on each start position of pattern p in text t
 	short *found = (short*)calloc(stop_t, sizeof(short));
 
+	clock_t start = clock();
 	for (id = 0; id < NR_THREADS; ++id)
 	{
 		start_p = 0; //omp does not use the previous value, except firstprivate
@@ -231,5 +233,8 @@ int main(int argc, char **argv){
 	}
 	
 	pthread_mutex_destroy(&mutex);
+	
+	clock_t stop = clock();
+	printf("Executed in %f\n",((float)stop-start)/CLOCKS_PER_SEC);
 			return 0;
 }

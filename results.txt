@@ -1,0 +1,29 @@
+indexes -> 0.000158s
+pointers -> 0.000144s
+omp 2 threads -> 0.00077
+omp 4 threads -> 0.00149
+pthreads 2 threads -> 0.000216
+pthreads 4 threads -> 0.000447
+pthreads 8 threads -> 0.001403
+pthreads 16 threads -> 0.004900
+mpi -> 8 nodes -> 0m0.635s
+mpi -> 2 nodes -> 0m1.218s
+mpi -> 4 nodes -> 0m0.610s
+mpi + omp -> 2 nodes 2 threads = 0m0.852s
+mpi + omp -> 2 nodes 4 threads = 0m0.724s
+mpi + omp -> 2 nodes 8 threads = 0m0.610s
+mpi + omp -> 4 nodes 2 threads = 0m0.630s
+mpi + omp -> 4 nodes 4 threads = 0m0.727s
+mpi + omp -> 4 nodes 8 threads = 0m1.146s //text mic, la recombinare se recalcueaza
+mpi + omp -> 8 nodes 2 threads = 0m0.894s
+mpi + omp -> 8 nodes 4 threads = 0m0.900s
+mpi + omp -> 8 nodes 2 threads = 0m1.005s
+mpi + pthread -> 2 nodes 2 threads = 0m0.598s
+mpi + pthread -> 2 nodes 4 threads = 0m0.718s
+mpi + pthread -> 2 nodes 8 threads = 0m0.718s
+mpi + pthread -> 4 nodes 2 threads = 0m0.853s
+mpi + pthread -> 4 nodes 4 threads = 0m0.602s
+mpi + pthread -> 4 nodes 8 threads = 0m0.600s
+mpi + pthread -> 8 nodes 2 threads = 0m0.770s
+mpi + pthread -> 8 nodes 4 threads = 0m0.616s
+mpi + pthread -> 8 nodes 8 threads = 0m0.629s
